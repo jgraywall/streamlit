@@ -1,0 +1,216 @@
+import pandas as pd
+
+# file path 
+file_path = '/Users/jaygrewal/Downloads/Dummy Sales Forecasting Data (in thousands w_Naive).xlsx'
+
+# read xlsx file into a pandas dataframe
+data = pd.read_excel(file_path)
+
+# display dataframe 
+data.head()
+
+
+# In[9]:
+
+
+data.columns
+
+
+# In[2]:
+
+
+import pandas as pd
+
+
+
+# In[3]:
+
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import streamlit as st
+
+# Function to clean column names
+def clean_column_names(data):
+    data.columns = data.columns.str.strip().str.replace(' ', '_')
+
+# Function to clean cell values in the entire DataFrame
+def clean_data(data):
+    data = data.applymap(lambda x: x.strip() if isinstance(x, str) else x)
+    return data
+
+# Function to plot margin of error
+def plot_margin_of_error(data, models_to_analyze, lags_to_analyze, selected_models, selected_brands):
+    results = []
+
+    # Loop through models
+    for model in models_to_analyze:
+        # Loop through brands
+        for brand in selected_brands if selected_brands else data['Brand'].unique():
+            # New DF 'brand_data' filtering 'data' for vals. in rows where 'Brand' col. = current brand
+            brand_data = data[data['Brand'] == brand]
+
+            # Loop through lag values (month)
+            for lag in lags_to_analyze:
+                # New DF 'lag_data' filtering 'brand_data' for vals. in rows where 'Month' col. = current lag value
+                lag_data = brand_data[brand_data['Month'] == lag]
+
+                # Extract data from actuals & model 
+                actuals = lag_data['Actuals']
+                forecast = lag_data[model]
+
+                # Value check for lengths > 1
+                if len(actuals) > 1 and len(forecast) > 1:
+                    margin_of_error = ((forecast - actuals) / actuals) * 100
+
+                    results.append({
+                        'Model': model,
+                        'Brand': brand,
+                        'Lag': lag,
+                        'Margin_of_Error(%)': margin_of_error.mean()
+                    })
+
+    # Results DF
+    results_df = pd.DataFrame(results)
+
+    # Scatter plots
+    unique_models = results_df['Model'].unique()
+
+    fig, axes = plt.subplots(nrows=len(unique_models), ncols=1, figsize=(10, 8))
+
+    for i, model in enumerate(selected_models if selected_models else unique_models):
+        model_data = results_df[results_df['Model'] == model]
+        brands = model_data['Brand'].unique()
+
+        for brand in brands:
+            brand_data = model_data[model_data['Brand'] == brand]
+            x = brand_data['Lag']
+            y = brand_data['Margin_of_Error(%)']
+
+            # Plot with lines connecting data points
+            axes[i].plot(x, y, marker='o', label=brand, linestyle='-', markersize=8)
+
+            # Horizontal line at y=0 
+            axes[i].axhline(y=0, color='black', linestyle='--', linewidth=0.5)
+
+        axes[i].set_title(f'Margin of Error (%) for Model {model}')
+        axes[i].set_xlabel('Lag Time')
+        axes[i].set_ylabel('Margin of Error (%)')
+        axes[i].legend()
+
+    plt.tight_layout()
+    st.pyplot(fig)
+
+# Example usage:
+file_path = '/Users/jaygrewal/Downloads/Dummy Sales Forecasting Data (in thousands w_Naive).xlsx'
+data = pd.read_excel(file_path)
+clean_column_names(data)  # Clean column names
+models_to_analyze = ['PACE', 'SLT', 'PPR']
+lags_to_analyze = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+
+# Sidebar for user input
+st.sidebar.title('Margin of Error Analysis')
+selected_models = st.sidebar.multiselect('Select Models', models_to_analyze, models_to_analyze)
+selected_brands = st.sidebar.multiselect('Select Brands', data['Brand'].unique(), data['Brand'].unique())
+
+# Button to generate the plot
+if st.sidebar.button('Generate Plot'):
+    plot_margin_of_error(data, models_to_analyze, lags_to_analyze, selected_models, selected_brands)
+
+
+# In[6]:
+
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import streamlit as st
+
+# Function to clean column names
+def clean_column_names(data):
+    data.columns = data.columns.str.strip().str.replace(' ', '_')
+
+# Function to clean cell values in the entire DataFrame
+def clean_data(data):
+    data = data.applymap(lambda x: x.strip() if isinstance(x, str) else x)
+    return data
+
+# Function to plot margin of error
+def plot_margin_of_error(data, models_to_analyze, lags_to_analyze, selected_models, selected_brands):
+    results = []
+
+    # Loop through models
+    for model in models_to_analyze:
+        # Loop through brands
+        for brand in selected_brands if selected_brands else data['Brand'].unique():
+            # New DF 'brand_data' filtering 'data' for vals. in rows where 'Brand' col. = current brand
+            brand_data = data[data['Brand'] == brand]
+
+            # Loop through lag values (month)
+            for lag in lags_to_analyze:
+                # New DF 'lag_data' filtering 'brand_data' for vals. in rows where 'Month' col. = current lag value
+                lag_data = brand_data[brand_data['Month'] == lag]
+
+                # Extract data from actuals & model 
+                actuals = lag_data['Actuals']
+                forecast = lag_data[model]
+
+                # Value check for lengths > 1
+                if len(actuals) > 1 and len(forecast) > 1:
+                    margin_of_error = ((forecast - actuals) / actuals) * 100
+
+                    results.append({
+                        'Model': model,
+                        'Brand': brand,
+                        'Lag': lag,
+                        'Margin_of_Error(%)': margin_of_error.mean()
+                    })
+
+    # Results DF
+    results_df = pd.DataFrame(results)
+
+    # Scatter plots
+    unique_models = results_df['Model'].unique()
+
+    fig, axes = plt.subplots(nrows=len(unique_models), ncols=1, figsize=(10, 8))
+
+    for i, model in enumerate(selected_models if selected_models else unique_models):
+        model_data = results_df[results_df['Model'] == model]
+        brands = model_data['Brand'].unique()
+
+        for brand in brands:
+            brand_data = model_data[model_data['Brand'] == brand]
+            x = brand_data['Lag']
+            y = brand_data['Margin_of_Error(%)']
+
+            # Plot with lines connecting data points
+            axes[i].plot(x, y, marker='o', label=brand, linestyle='-', markersize=8)
+
+            # Horizontal line at y=0 
+            axes[i].axhline(y=0, color='black', linestyle='--', linewidth=0.5)
+
+        axes[i].set_title(f'Margin of Error (%) for Model {model}')
+        axes[i].set_xlabel('Lag Time')
+        axes[i].set_ylabel('Margin of Error (%)')
+        axes[i].legend()
+
+    plt.tight_layout()
+    st.pyplot(fig)
+
+# Example usage:
+file_path = '/Users/jaygrewal/Downloads/Dummy Sales Forecasting Data (in thousands w_Naive).xlsx'
+data = pd.read_excel(file_path)
+clean_column_names(data)  # Clean column names
+
+# Configure Streamlit for Jupyter Notebook
+st.set_option('deprecation.showfileUploaderEncoding', False)
+
+# Sidebar for user input
+st.sidebar.title('Margin of Error Analysis')
+selected_models = st.sidebar.multiselect('Select Models', models_to_analyze, models_to_analyze)
+selected_brands = st.sidebar.multiselect('Select Brands', data['Brand'].unique(), data['Brand'].unique())
+
+# Button to generate the plot
+if st.sidebar.button('Generate Plot'):
+    plot_margin_of_error(data, models_to_analyze, lags_to_analyze, selected_models, selected_brands)
